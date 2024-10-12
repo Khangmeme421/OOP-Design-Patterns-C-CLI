@@ -134,6 +134,41 @@ namespace Comp1551_Coursewark
             // You can add your own implementation here
         }
     }
+
+    // Question class
+    public abstract class Question
+    {
+        public string Title { get; set; }
+        public string CorrectAnswer { get; set; }
+        public int Points { get; set; }
+
+        public Question(string title, string correctAnswer)
+        {
+            Title = title;
+            CorrectAnswer = correctAnswer;
+        }
+
+        public abstract bool CheckAnswer(string answer);
+        public abstract void DisplayQuestion(int questionNumber);
+    }
+    public class TrueFalseQuestion : Question
+    {
+        public override void DisplayQuestion(int questionNumber)
+        {
+            Console.WriteLine($"{questionNumber}. {Title}");
+        }
+        public override bool CheckAnswer(string answer)
+        {
+            return (answer == CorrectAnswer);
+        }
+        public TrueFalseQuestion(string title, string correctAnswer, int points = 10)
+        : base(title, correctAnswer)
+        {
+            Points = points;
+        }
+    }
+
+    // Data of the program such as: Questions, Players, etc.
     public class DataManagement
     {
 
@@ -142,8 +177,11 @@ namespace Comp1551_Coursewark
     {
         static void Main(string[] args)
         {
-            Menu ManageUserMenu = new ManageUserMenu();
-            ManageUserMenu.DisplayMenu();
+            Question TrueFalseQuestion = new TrueFalseQuestion("Question 1", "false");
+            TrueFalseQuestion.DisplayQuestion(1);
+
+            Console.WriteLine(TrueFalseQuestion.CheckAnswer("true"));
+            Console.Read();
         }
     }
 }
