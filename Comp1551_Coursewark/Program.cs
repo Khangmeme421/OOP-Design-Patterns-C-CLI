@@ -128,13 +128,16 @@ namespace Comp1551_Coursewark
             this.Role = role;
             _score = 0;
         }
-        public void CreateQuestion()
+        public void AnswerQuestion()
         {
             // TO DO: implement the CreateQuestion method
             // You can add your own implementation here
         }
     }
+    public class DataManagement
+    {
 
+    }
     internal class Program
     {
         static void Main(string[] args)
