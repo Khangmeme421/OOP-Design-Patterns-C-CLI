@@ -167,7 +167,45 @@ namespace Comp1551_Coursewark
             Points = points;
         }
     }
+    public class MultipleChoiceQuestion : Question
+    {
+        private List<string> answerOptions;
 
+        public MultipleChoiceQuestion(string title, string correctAnswer, List<string> options)
+            : base(title, correctAnswer)
+        {
+            answerOptions = options;
+        }
+
+        public override bool CheckAnswer(string answer)
+        {
+            return answer == CorrectAnswer;
+        }
+        public override void DisplayQuestion(int questionNumber)
+        {
+            // Create a copy of the answer options and shuffle it
+            List<string> shuffledOptions = new List<string>(answerOptions);
+            Random random = new Random();
+            int n = shuffledOptions.Count;
+
+            // Fisher-Yates shuffle algorithm
+            for (int i = n - 1; i > 0; i--)
+            {
+                int j = random.Next(i + 1);
+                // Swap shuffledOptions[i] with the element at random index
+                string temp = shuffledOptions[i];
+                shuffledOptions[i] = shuffledOptions[j];
+                shuffledOptions[j] = temp;
+            }
+
+            // Display the title and shuffled options
+            Console.WriteLine($"Question {questionNumber}: {Title}");
+            for (int i = 0; i < shuffledOptions.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {shuffledOptions[i]}");
+            }
+        }
+    }
     // Data of the program such as: Questions, Players, etc.
     public class DataManagement
     {
@@ -177,10 +215,10 @@ namespace Comp1551_Coursewark
     {
         static void Main(string[] args)
         {
-            Question TrueFalseQuestion = new TrueFalseQuestion("Question 1", "false");
-            TrueFalseQuestion.DisplayQuestion(1);
-
-            Console.WriteLine(TrueFalseQuestion.CheckAnswer("true"));
+            Question multipleChoiceQuestion = new MultipleChoiceQuestion("Who is Laos president?", "Anh Long", new List<string> { "Anh Khang", "Anh Long", "Komkhao", "Katto" });
+            multipleChoiceQuestion.DisplayQuestion(1);
+            string answer = Console.ReadLine();
+            Console.WriteLine(multipleChoiceQuestion.CheckAnswer(answer));
             Console.Read();
         }
     }
