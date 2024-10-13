@@ -206,6 +206,24 @@ namespace Comp1551_Coursewark
             }
         }
     }
+
+    public class OpenEndedQuestion : Question
+    {
+
+        public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer)
+        {
+            
+        }
+
+        public override bool CheckAnswer(string answer)
+        {
+            return string.Equals(answer, CorrectAnswer, StringComparison.OrdinalIgnoreCase);
+        }
+        public override void DisplayQuestion(int questionNumber)
+        {
+            Console.WriteLine($"{questionNumber}. {Title}");
+        }
+    }
     // Data of the program such as: Questions, Players, etc.
     public class DataManagement
     {
@@ -215,10 +233,11 @@ namespace Comp1551_Coursewark
     {
         static void Main(string[] args)
         {
-            Question multipleChoiceQuestion = new MultipleChoiceQuestion("Who is Laos president?", "Anh Long", new List<string> { "Anh Khang", "Anh Long", "Komkhao", "Katto" });
-            multipleChoiceQuestion.DisplayQuestion(1);
+            Question OpenQuestion = new OpenEndedQuestion("What is the capital of France?", "Paris");
+            OpenQuestion.DisplayQuestion(1);
+            Console.Write("Answer: ");
             string answer = Console.ReadLine();
-            Console.WriteLine(multipleChoiceQuestion.CheckAnswer(answer));
+            Console.WriteLine(OpenQuestion.CheckAnswer(answer) ? "Correct" : "Incorrect");
             Console.Read();
         }
     }
