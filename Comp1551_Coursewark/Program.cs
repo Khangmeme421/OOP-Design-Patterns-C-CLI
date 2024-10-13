@@ -227,7 +227,9 @@ namespace Comp1551_Coursewark
     // Data of the program such as: Questions, Players, etc.
     public class DataManagement
     {
-
+        public static List<User> Users { get; set; } = new List<User>();
+        public static List<Question> Questions { get; set; } = new List<Question>();
+        public static List<Menu> Menus { get; set; } = new List<Menu>();
     }
     internal class Program
     {
