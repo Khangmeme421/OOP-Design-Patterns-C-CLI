@@ -18,19 +18,67 @@ namespace Comp1551_Coursewark
     {
         public MainMenu()
         {
-            MenuItems = new List<string> { "Exit program", "Create new user", "Login as user" };
+            MenuItems = new List<string> { "Exit program", "Manage Questions", "Play" };
         }
-
         public override string DisplayMenu()
         {
-            Console.WriteLine("Menu:");
+            Console.WriteLine("Main Menu:");
             for (int i = 0; i < MenuItems.Count; i++)
             {
                 Console.WriteLine($"{i}. {MenuItems[i]}");
             }
-            Console.Write("Choose an option: ");
+            Console.Write("Choose an option (0-2): ");
             string option = Console.ReadLine();
-            while (option != "0" && option != "1" && option != "2")
+            List<string> invalidOptions = new List<string> { "0", "1", "2" };
+            while (!invalidOptions.Contains(option))
+            {
+                Console.Write("Invalid option. Please choose again: ");
+                option = Console.ReadLine();
+            }
+            return option;
+        }
+    }
+    public class ManageQuestionsMenu : Menu
+    {
+        public ManageQuestionsMenu()
+        {
+            MenuItems = new List<string> { "Back", "Create new question", "View all questions", "Delete question" };
+        }
+        public override string DisplayMenu()
+        {
+            Console.WriteLine("Manage Questions Menu:");
+            for (int i = 0; i < MenuItems.Count; i++)
+            {
+                Console.WriteLine($"{i}. {MenuItems[i]}");
+            }
+            Console.Write("Choose an option (0-3): ");
+            string option = Console.ReadLine();
+            List<string> invalidOptions = new List<string> { "0", "1", "2", "3" };
+            while (!invalidOptions.Contains(option))
+            {
+                Console.Write("Invalid option. Please choose again: ");
+                option = Console.ReadLine();
+            }
+            return option;
+        }
+    }
+    public class CreateQuestionMenu : Menu
+    {
+        public CreateQuestionMenu()
+        {
+            MenuItems = new List<string> { "Back", "Open ended question", "Multiple choice question", "True or false question" };
+        }
+        public override string DisplayMenu()
+        {
+            Console.WriteLine("Manage Questions Menu:");
+            for (int i = 0; i < MenuItems.Count; i++)
+            {
+                Console.WriteLine($"{i}. {MenuItems[i]}");
+            }
+            Console.Write("Choose a question type (0-3): ");
+            string option = Console.ReadLine();
+            List<string> invalidOptions = new List<string> { "0", "1", "2", "3" };
+            while (!invalidOptions.Contains(option))
             {
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
@@ -55,7 +103,8 @@ namespace Comp1551_Coursewark
             }
             Console.Write("Choose an option: ");
             string option = Console.ReadLine();
-            while (option != "0" && option != "1" && option != "2" && option != "3")
+            List<string> invalidOptions = new List<string> { "0", "1", "2", "3" };
+            while (!invalidOptions.Contains(option))
             {
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
@@ -155,11 +204,11 @@ namespace Comp1551_Coursewark
     {
         public override void DisplayQuestion(int questionNumber)
         {
-            Console.WriteLine($"{questionNumber}. {Title}");
+            Console.WriteLine($"{questionNumber}. {Title} (True/False)");
         }
         public override bool CheckAnswer(string answer)
         {
-            return (answer == CorrectAnswer);
+            return answer.Equals(CorrectAnswer, StringComparison.OrdinalIgnoreCase);
         }
         public TrueFalseQuestion(string title, string correctAnswer, int points = 10)
         : base(title, correctAnswer)
@@ -179,51 +228,71 @@ namespace Comp1551_Coursewark
 
         public override bool CheckAnswer(string answer)
         {
-            return answer == CorrectAnswer;
+            return answer.Equals(CorrectAnswer, StringComparison.OrdinalIgnoreCase);
         }
         public override void DisplayQuestion(int questionNumber)
         {
-            // Create a copy of the answer options and shuffle it
-            List<string> shuffledOptions = new List<string>(answerOptions);
-            Random random = new Random();
-            int n = shuffledOptions.Count;
-
-            // Fisher-Yates shuffle algorithm
-            for (int i = n - 1; i > 0; i--)
+            Console.WriteLine($"{questionNumber}. {Title} (A,B,C,D)");
+            for (int i = 0; i < answerOptions.Count; i++)
             {
-                int j = random.Next(i + 1);
-                // Swap shuffledOptions[i] with the element at random index
-                string temp = shuffledOptions[i];
-                shuffledOptions[i] = shuffledOptions[j];
-                shuffledOptions[j] = temp;
-            }
-
-            // Display the title and shuffled options
-            Console.WriteLine($"Question {questionNumber}: {Title}");
-            for (int i = 0; i < shuffledOptions.Count; i++)
-            {
-                Console.WriteLine($"{i + 1}. {shuffledOptions[i]}");
+                Console.WriteLine($"{i + 1}. {answerOptions[i]}");
             }
         }
     }
 
     public class OpenEndedQuestion : Question
     {
+        public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer) { }
 
-        public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer)
-        {
-            
-        }
-
-        public override bool CheckAnswer(string answer)
-        {
-            return string.Equals(answer, CorrectAnswer, StringComparison.OrdinalIgnoreCase);
-        }
         public override void DisplayQuestion(int questionNumber)
         {
-            Console.WriteLine($"{questionNumber}. {Title}");
+            Console.WriteLine($"{questionNumber}. {Title} (Open-ended)");
+        }
+        public override bool CheckAnswer(string answer)
+        {
+            return CorrectAnswer.Split(',').Any(a => a.Trim().Equals(answer.Trim(), StringComparison.OrdinalIgnoreCase));
         }
     }
+    public class QuestionFactory
+    {
+        public static Question CreateQuestion()
+        {
+            Console.WriteLine("Select question type: 1. Open-ended 2. Multiple choice 3. True/False");
+            string choice = Console.ReadLine();
+
+            Console.Write("Enter question title: ");
+            string title = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    Console.Write("Enter correct answer(s) separated by commas: ");
+                    string openEndedAnswer = Console.ReadLine();
+                    return new OpenEndedQuestion(title, openEndedAnswer);
+
+                case "2":
+                    Console.Write("Enter correct answer index (1-4): ");
+                    int index = int.Parse(Console.ReadLine()) - 1;
+                    List<string> options = new List<string>();
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Console.Write($"Enter option {i + 1}: ");
+                        options.Add(Console.ReadLine());
+                    }
+                    return new MultipleChoiceQuestion(title, options[index], options);
+
+                case "3":
+                    Console.Write("Enter correct answer (True/False): ");
+                    string trueFalseAnswer = Console.ReadLine();
+                    return new TrueFalseQuestion(title, trueFalseAnswer);
+
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    return null;
+            }
+        }
+    }
+    /*
     // Data of the program such as: Questions, Players, etc.
     public class DataManagement
     {
@@ -231,16 +300,64 @@ namespace Comp1551_Coursewark
         public static List<Question> Questions { get; set; } = new List<Question>();
         public static List<Menu> Menus { get; set; } = new List<Menu>();
     }
+    */
+    public class DataManagement
+    {
+        private static DataManagement _instance;
+        private static readonly object _lock = new object();
+
+        public List<Question> Questions { get; private set; } = new List<Question>();
+
+        private DataManagement() { }
+
+        public static DataManagement Instance
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new DataManagement();
+                    }
+                    return _instance;
+                }
+            }
+        }
+    }
     internal class Program
     {
         static void Main(string[] args)
         {
-            Question OpenQuestion = new OpenEndedQuestion("What is the capital of France?", "Paris");
-            OpenQuestion.DisplayQuestion(1);
-            Console.Write("Answer: ");
-            string answer = Console.ReadLine();
-            Console.WriteLine(OpenQuestion.CheckAnswer(answer) ? "Correct" : "Incorrect");
-            Console.Read();
+            while (true)
+            {
+                Console.WriteLine("1. Create a new question");
+                Console.WriteLine("2. Exit");
+                string option = Console.ReadLine();
+
+                if (option == "1")
+                {
+                    Question question = QuestionFactory.CreateQuestion();
+                    if (question != null)
+                    {
+                        DataManagement.Instance.Questions.Add(question);
+                        Console.WriteLine("Question added successfully!");
+                    }
+                }
+                else if (option == "2")
+                {
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid option. Please try again.");
+                }
+            }
+            Console.WriteLine("All questions below: ");
+            for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
+            {
+                DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
+            }
         }
     }
 }
