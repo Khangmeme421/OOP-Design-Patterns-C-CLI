@@ -62,6 +62,50 @@ namespace Comp1551_Coursewark
             return option;
         }
     }
+
+    public class ViewAllQuestionsMenu : Menu
+    {
+        public ViewAllQuestionsMenu()
+        {
+            // Initialize the MenuItems list with "Back"
+            MenuItems = new List<string> { "Back" };
+
+            // Fetch questions from DataManagement and add their titles to the MenuItems
+            var questions = DataManagement.Instance.Questions;
+            foreach (var question in questions)
+            {
+                MenuItems.Add(question.Title);
+            }
+        }
+
+        public override string DisplayMenu()
+        {
+            // Fetch questions from DataManagement and add their titles to the MenuItems
+            MenuItems = new List<string> { "Back" };
+            var questions = DataManagement.Instance.Questions;
+            foreach (var question in questions)
+            {
+                MenuItems.Add(question.Title + " " + question.QuestionType);
+            }
+
+            Console.WriteLine("View All Questions Menu:");
+            for (int i = 0; i < MenuItems.Count; i++)
+            {
+                Console.WriteLine($"{i}. {MenuItems[i]}");
+            }
+            Console.Write("Enter (0) to get back: ");
+            string option = Console.ReadLine();
+
+            // Validate the input option
+            while (!int.TryParse(option, out int index) || index < 0 || index >= MenuItems.Count)
+            {
+                Console.Write("Invalid option. Please choose again: ");
+                option = Console.ReadLine();
+            }
+            return option;
+        }
+    }
+
     public class CreateQuestionMenu : Menu
     {
         public CreateQuestionMenu()
@@ -189,6 +233,7 @@ namespace Comp1551_Coursewark
     {
         public string Title { get; set; }
         public string CorrectAnswer { get; set; }
+        public string QuestionType { get; set; }
         public int Points { get; set; }
 
         public Question(string title, string correctAnswer)
@@ -204,7 +249,7 @@ namespace Comp1551_Coursewark
     {
         public override void DisplayQuestion(int questionNumber)
         {
-            Console.WriteLine($"{questionNumber}. {Title} (True/False)");
+            Console.WriteLine($"{questionNumber}. {Title}  {QuestionType}");
         }
         public override bool CheckAnswer(string answer)
         {
@@ -214,16 +259,19 @@ namespace Comp1551_Coursewark
         : base(title, correctAnswer)
         {
             Points = points;
+            QuestionType = "(True/False)";
         }
     }
     public class MultipleChoiceQuestion : Question
     {
         private List<string> answerOptions;
 
-        public MultipleChoiceQuestion(string title, string correctAnswer, List<string> options)
+        public MultipleChoiceQuestion(string title, string correctAnswer, List<string> options, int points = 15)
             : base(title, correctAnswer)
         {
+            Points = points;
             answerOptions = options;
+            QuestionType = "(A,B,C,D)";
         }
 
         public override bool CheckAnswer(string answer)
@@ -232,21 +280,25 @@ namespace Comp1551_Coursewark
         }
         public override void DisplayQuestion(int questionNumber)
         {
-            Console.WriteLine($"{questionNumber}. {Title} (A,B,C,D)");
-            for (int i = 0; i < answerOptions.Count; i++)
+            Console.WriteLine($"{questionNumber}. {Title} {QuestionType}");
+            for (int i = 0, j = 'A'; j <= 'D'; i++, j++)
             {
-                Console.WriteLine($"{i + 1}. {answerOptions[i]}");
+                Console.WriteLine($"{Convert.ToChar(j)}. {answerOptions[i]}");
             }
         }
     }
 
     public class OpenEndedQuestion : Question
     {
-        public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer) { }
+        public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer) 
+        {
+            Points = 20;
+            QuestionType = "(Open-ended)";
+        }
 
         public override void DisplayQuestion(int questionNumber)
         {
-            Console.WriteLine($"{questionNumber}. {Title} (Open-ended)");
+            Console.WriteLine($"{questionNumber}. {Title} {QuestionType}");
         }
         public override bool CheckAnswer(string answer)
         {
@@ -257,7 +309,7 @@ namespace Comp1551_Coursewark
     {
         public static Question CreateQuestion()
         {
-            Console.WriteLine("Select question type: 1. Open-ended 2. Multiple choice 3. True/False");
+            Console.WriteLine("Select question type: \n1. Open-ended \n2. Multiple choice \n3. True/False");
             string choice = Console.ReadLine();
 
             Console.Write("Enter question title: ");
@@ -271,14 +323,21 @@ namespace Comp1551_Coursewark
                     return new OpenEndedQuestion(title, openEndedAnswer);
 
                 case "2":
-                    Console.Write("Enter correct answer index (1-4): ");
-                    int index = int.Parse(Console.ReadLine()) - 1;
                     List<string> options = new List<string>();
                     for (int i = 0; i < 4; i++)
                     {
                         Console.Write($"Enter option {i + 1}: ");
                         options.Add(Console.ReadLine());
                     }
+                    int index;
+                    do
+                    {
+                        Console.Write("Enter correct answer character (A-D): ");
+                        char correctAnswerChar = char.ToUpper(Console.ReadLine()[0]); // Ensure it's uppercase
+                        index = correctAnswerChar - 'A'; // Convert character to index (A=0, B=1, C=2, D=3)
+
+                    }
+                    while (index < 0 &&  index > 3);
                     return new MultipleChoiceQuestion(title, options[index], options);
 
                 case "3":
@@ -292,15 +351,24 @@ namespace Comp1551_Coursewark
             }
         }
     }
-    /*
-    // Data of the program such as: Questions, Players, etc.
-    public class DataManagement
+
+    public class MenuFactory
     {
-        public static List<User> Users { get; set; } = new List<User>();
-        public static List<Question> Questions { get; set; } = new List<Question>();
-        public static List<Menu> Menus { get; set; } = new List<Menu>();
+        public static Menu CreateMenu(string menuType)
+        {
+            switch (menuType)
+            {
+                case "MainMenu":
+                    return new MainMenu();
+                case "ManageQuestionsMenu":
+                    return new ManageQuestionsMenu();
+                case "ViewAllQuestionsMenu":
+                    return new ViewAllQuestionsMenu();
+                default:
+                    throw new ArgumentException("Invalid menu type");
+            }
+        }
     }
-    */
     public class DataManagement
     {
         private static DataManagement _instance;
@@ -329,10 +397,12 @@ namespace Comp1551_Coursewark
     {
         static void Main(string[] args)
         {
+            /*
             while (true)
             {
+                Console.WriteLine("0. Exit program");
                 Console.WriteLine("1. Create a new question");
-                Console.WriteLine("2. Exit");
+                Console.WriteLine("2. Play the quiz game");
                 string option = Console.ReadLine();
 
                 if (option == "1")
@@ -344,7 +414,7 @@ namespace Comp1551_Coursewark
                         Console.WriteLine("Question added successfully!");
                     }
                 }
-                else if (option == "2")
+                else if (option == "0")
                 {
                     break;
                 }
@@ -358,6 +428,22 @@ namespace Comp1551_Coursewark
             {
                 DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
             }
+            */
+            Menu mainMenu = MenuFactory.CreateMenu("MainMenu");
+            Menu viewquestionsMenu = MenuFactory.CreateMenu("ViewAllQuestionsMenu");
+
+            Question question = QuestionFactory.CreateQuestion();
+            DataManagement.Instance.Questions.Add(question);
+            // Display the main menu
+ 
+
+            // Display the manage questions menu
+            string option = viewquestionsMenu.DisplayMenu();
+            for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
+            {
+                DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
+            }
+            Console.ReadLine();
         }
     }
 }
