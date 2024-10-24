@@ -19,7 +19,7 @@ namespace Comp1551_Coursewark
     {
         public MainMenu()
         {
-            MenuItems = new List<string> { "Exit program", "Manage Questions", "Play" };
+            MenuItems = new List<string> { "Exit Program", "Manage Questions", "Play" };
         }
         public override string DisplayMenu()
         {
@@ -36,7 +36,9 @@ namespace Comp1551_Coursewark
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            return option;
+            int optionIndex = int.Parse(option);
+            string returnMenu = MenuItems[optionIndex].Replace(" ", "") + "Menu";
+            return returnMenu;
         }
     }
     public class ManageQuestionsMenu : Menu
@@ -60,7 +62,9 @@ namespace Comp1551_Coursewark
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            return option;
+            int optionIndex = int.Parse(option);
+            string returnMenu = MenuItems[optionIndex].Replace(" ", "") + "Menu";
+            return returnMenu;
         }
     }
 
@@ -96,7 +100,9 @@ namespace Comp1551_Coursewark
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            return option;
+            int optionIndex = int.Parse(option);
+            string returnMenu = MenuItems[optionIndex].Replace(" ", "") + "Menu";
+            return returnMenu;
         }
     }
 
@@ -128,39 +134,100 @@ namespace Comp1551_Coursewark
 
             // Validate the input option
             int index;
+            if (option == "0")
+                return "BackMenu";
             while (!int.TryParse(option, out index) || index < 0 || index >= MenuItems.Count)
             {
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            if (option == "0")
-                return option;
             bool success = DataManagement.Instance.DeleteQuestion(index - 1); // Adjust for "Back" option
-            return option; // Return the chosen option
+            return "BackMenu";
         }
     }
     public class CreateQuestionMenu : Menu
     {
         public CreateQuestionMenu()
         {
-            MenuItems = new List<string> { "Back", "Open ended question", "Multiple choice question", "True or false question" };
+            MenuItems = new List<string> { "Back" }; // The only option initially is to go back
         }
+
         public override string DisplayMenu()
         {
-            Console.WriteLine("Manage Questions Menu:");
-            for (int i = 0; i < MenuItems.Count; i++)
+            List<string> questionTypes = new List<string>()
+        {
+            "Open-Ended",
+            "Multiple Choice",
+            "True/False"
+        };
+
+            Console.WriteLine("Create New Question:");
+            Console.WriteLine("Select question type:");
+            Console.WriteLine("0. Back");
+            for (int i = 0; i < questionTypes.Count; i++)
             {
-                Console.WriteLine($"{i}. {MenuItems[i]}");
+                Console.WriteLine($"{i + 1}. {questionTypes[i]}");
             }
-            Console.Write("Choose a question type (0-3): ");
-            string option = Console.ReadLine();
-            List<string> invalidOptions = new List<string> { "0", "1", "2", "3" };
-            while (!invalidOptions.Contains(option))
+
+            string choice = Console.ReadLine();
+            int choice_int;
+            while (!int.TryParse(choice, out choice_int) || choice_int < 0 || choice_int > 3)
             {
-                Console.Write("Invalid option. Please choose again: ");
-                option = Console.ReadLine();
+                Console.Write("Invalid choice. Please enter a number between 0 and 3: ");
+                choice = Console.ReadLine();
             }
-            return option;
+
+            if (choice_int == 0) // If the user chooses to go back
+            {
+                return "Back"; // Indicate that the user wants to go back
+            }
+
+            Console.Write($"({questionTypes[choice_int - 1]}) Enter question title: ");
+            string title = Console.ReadLine();
+
+            Question question = null;
+
+            switch (choice_int)
+            {
+                case 1:
+                    Console.Write("Enter correct answer(s) separated by commas: ");
+                    string openEndedAnswer = Console.ReadLine();
+                    question = new OpenEndedQuestion(title, openEndedAnswer);
+                    break;
+
+                case 2:
+                    List<string> options = new List<string>();
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Console.Write($"Enter option {i + 1}: ");
+                        options.Add(Console.ReadLine());
+                    }
+                    int index;
+                    do
+                    {
+                        Console.Write("Enter correct answer character (A-D): ");
+                        char correctAnswerChar = char.ToUpper(Console.ReadLine()[0]);
+                        index = correctAnswerChar - 'A';
+                    }
+                    while (index < 0 || index > 3);
+                    question = new MultipleChoiceQuestion(title, options[index], options);
+                    break;
+
+                case 3:
+                    Console.Write("Enter correct answer (True/False): ");
+                    string trueFalseAnswer = Console.ReadLine();
+                    question = new TrueFalseQuestion(title, trueFalseAnswer);
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    return "Back";
+            }
+
+            // Add the created question to the DataManagement instance
+            DataManagement.Instance.Questions.Add(question);
+            Console.WriteLine("Question created successfully.");
+            return "BackMenu"; // After creating a question, go back to the previous menu
         }
     }
 
@@ -181,7 +248,9 @@ namespace Comp1551_Coursewark
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            return option;
+            int optionIndex = int.Parse(option);
+            string returnMenu = MenuItems[optionIndex].Replace(" ", "") + "Menu";
+            return returnMenu;
         }
     }
 
@@ -207,7 +276,9 @@ namespace Comp1551_Coursewark
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            return option;
+            int optionIndex = int.Parse(option);
+            string returnMenu = MenuItems[optionIndex].Replace(" ", "") + "Menu";
+            return returnMenu;
         }
     }
 
@@ -431,9 +502,10 @@ namespace Comp1551_Coursewark
                 case "PlayMenu":
                     return new PlayMenu();
                 case "CreateNewQuestionMenu":
-                    Question question = QuestionFactory.CreateQuestion();
-                    DataManagement.Instance.Questions.Add(question);
-                    return null;
+                    return new CreateQuestionMenu();
+                case "BackMenu":
+                    DataManagement.Instance.MenuHistory.RemoveAt(DataManagement.Instance.MenuHistory.Count - 1);
+                    return DataManagement.Instance.MenuHistory[DataManagement.Instance.MenuHistory.Count - 1];
                 default:
                     return null;
             }
@@ -445,6 +517,7 @@ namespace Comp1551_Coursewark
         private static readonly object _lock = new object();
 
         public List<Question> Questions { get; private set; } = new List<Question>();
+        public List<Menu> MenuHistory { get; private set; } = new List<Menu>();
 
         private DataManagement() { }
 
@@ -461,6 +534,10 @@ namespace Comp1551_Coursewark
                     return _instance;
                 }
             }
+        }
+        public void AddMenuToHistory(Menu menu)
+        {
+            MenuHistory.Add(menu);
         }
         public bool DeleteQuestion(int index)
         {
@@ -534,14 +611,14 @@ namespace Comp1551_Coursewark
         }
         static void EndlessMenu(Menu menu)
         {
+            DataManagement.Instance.AddMenuToHistory(menu);
             string option = menu.DisplayMenu();
-            if (option == "0")
+            if (option == "ExitProgramMenu")
             {
                 return;
             }
-            int optionIndex = int.Parse(option);
-            string NextMenu = menu.MenuItems[optionIndex].Replace(" ", "") + "Menu";
-            EndlessMenu(MenuFactory.CreateMenu(NextMenu));
+            Console.Clear();
+            EndlessMenu(MenuFactory.CreateMenu(option));
         }
     }
 }
