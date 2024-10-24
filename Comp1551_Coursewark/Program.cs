@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -42,7 +43,7 @@ namespace Comp1551_Coursewark
     {
         public ManageQuestionsMenu()
         {
-            MenuItems = new List<string> { "Back", "Create new question", "View all questions", "Delete question" };
+            MenuItems = new List<string> { "Back", "Create New Question", "View All Questions", "Delete Questions" };
         }
         public override string DisplayMenu()
         {
@@ -117,21 +118,25 @@ namespace Comp1551_Coursewark
                 MenuItems.Add(question.Title + " " + question.QuestionType);
             }
 
-            Console.WriteLine("View All Questions Menu:");
+            Console.WriteLine("Delete Questions Menu:");
             for (int i = 0; i < MenuItems.Count; i++)
             {
                 Console.WriteLine($"{i}. {MenuItems[i]}");
             }
-            Console.Write("Enter (0) to get back: ");
+            Console.Write("Enter question number: ");
             string option = Console.ReadLine();
 
             // Validate the input option
-            while (!int.TryParse(option, out int index) || index < 0 || index >= MenuItems.Count)
+            int index;
+            while (!int.TryParse(option, out index) || index < 0 || index >= MenuItems.Count)
             {
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
-            return option;
+            if (option == "0")
+                return option;
+            bool success = DataManagement.Instance.DeleteQuestion(index - 1); // Adjust for "Back" option
+            return option; // Return the chosen option
         }
     }
     public class CreateQuestionMenu : Menu
@@ -150,6 +155,27 @@ namespace Comp1551_Coursewark
             Console.Write("Choose a question type (0-3): ");
             string option = Console.ReadLine();
             List<string> invalidOptions = new List<string> { "0", "1", "2", "3" };
+            while (!invalidOptions.Contains(option))
+            {
+                Console.Write("Invalid option. Please choose again: ");
+                option = Console.ReadLine();
+            }
+            return option;
+        }
+    }
+
+    public class PlayMenu : Menu
+    {
+        public PlayMenu()
+        {
+            MenuItems = new List<string> { "Back" };
+        }
+        public override string DisplayMenu()
+        {
+            Console.WriteLine("Play Quiz Menu:");
+            Console.Write("Go Back: ");
+            string option = Console.ReadLine();
+            List<string> invalidOptions = new List<string> { "0" };
             while (!invalidOptions.Contains(option))
             {
                 Console.Write("Invalid option. Please choose again: ");
@@ -332,10 +358,23 @@ namespace Comp1551_Coursewark
     {
         public static Question CreateQuestion()
         {
-            Console.WriteLine("Select question type: \n1. Open-ended \n2. Multiple choice \n3. True/False");
+            List<string> questionTypes;     //Temporary list of question types
+            questionTypes = new List<string>()
+            {
+                "Open-Ended",
+                "Multiple Choice",
+                "True/False"
+            };
+            Console.WriteLine($"Select question type: \n0. Back \n1. {questionTypes[0]} \n2. {questionTypes[1]} \n3. {questionTypes[2]}");
             string choice = Console.ReadLine();
+            int choice_int; // temporary choice_int storages the choice as integer
+            while (!int.TryParse(choice, out choice_int) || choice_int < 0 || choice_int > 3)
+            {
+                Console.Write("Invalid choice. Please enter a number between 0 and 3: ");
+                choice = Console.ReadLine();
+            }
 
-            Console.Write("Enter question title: ");
+            Console.Write($"({questionTypes[choice_int-1]}) Enter question title: ");
             string title = Console.ReadLine();
 
             switch (choice)
@@ -387,8 +426,16 @@ namespace Comp1551_Coursewark
                     return new ManageQuestionsMenu();
                 case "ViewAllQuestionsMenu":
                     return new ViewAllQuestionsMenu();
+                case "DeleteQuestionsMenu":
+                    return new DeleteQuestionsMenu();
+                case "PlayMenu":
+                    return new PlayMenu();
+                case "CreateNewQuestionMenu":
+                    Question question = QuestionFactory.CreateQuestion();
+                    DataManagement.Instance.Questions.Add(question);
+                    return null;
                 default:
-                    throw new ArgumentException("Invalid menu type");
+                    return null;
             }
         }
     }
@@ -414,6 +461,20 @@ namespace Comp1551_Coursewark
                     return _instance;
                 }
             }
+        }
+        public bool DeleteQuestion(int index)
+        {
+            // Validate the index
+            if (index < 0 || index >= Questions.Count)
+            {
+                Console.WriteLine("Invalid index. Unable to delete the question.");
+                return false; // Indicate failure
+            }
+
+            // Remove the question at the specified index
+            Questions.RemoveAt(index);
+            Console.WriteLine($"Question at index {index} has been deleted.");
+            return true; // Indicate success
         }
     }
     internal class Program
@@ -451,26 +512,36 @@ namespace Comp1551_Coursewark
             {
                 DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
             }
-            */
-            Menu mainMenu = MenuFactory.CreateMenu("MainMenu");
-            Menu viewquestionsMenu = MenuFactory.CreateMenu("ViewAllQuestionsMenu");
-
+            
             Question question = QuestionFactory.CreateQuestion();
             DataManagement.Instance.Questions.Add(question);
+            question = QuestionFactory.CreateQuestion();
             DataManagement.Instance.Questions.Add(question);
-            // Display the main menu
-
-
-            // Display the manage questions menu
-
-            string option = viewquestionsMenu.DisplayMenu();
-            /*
+            question = QuestionFactory.CreateQuestion();
+            DataManagement.Instance.Questions.Add(question);
+            string deleteOption = MenuFactory.CreateMenu("DeleteQuestionsMenu").DisplayMenu();
+            string option = MenuFactory.CreateMenu("ViewAllQuestionsMenu").DisplayMenu();
+            
             for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
             {
                 DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
             }
             */
+
+            Menu menu = MenuFactory.CreateMenu("MainMenu");
+            EndlessMenu(menu);
             Console.ReadLine();
+        }
+        static void EndlessMenu(Menu menu)
+        {
+            string option = menu.DisplayMenu();
+            if (option == "0")
+            {
+                return;
+            }
+            int optionIndex = int.Parse(option);
+            string NextMenu = menu.MenuItems[optionIndex].Replace(" ", "") + "Menu";
+            EndlessMenu(MenuFactory.CreateMenu(NextMenu));
         }
     }
 }
