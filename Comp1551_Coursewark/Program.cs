@@ -69,13 +69,6 @@ namespace Comp1551_Coursewark
         {
             // Initialize the MenuItems list with "Back"
             MenuItems = new List<string> { "Back" };
-
-            // Fetch questions from DataManagement and add their titles to the MenuItems
-            var questions = DataManagement.Instance.Questions;
-            foreach (var question in questions)
-            {
-                MenuItems.Add(question.Title);
-            }
         }
 
         public override string DisplayMenu()
@@ -106,6 +99,41 @@ namespace Comp1551_Coursewark
         }
     }
 
+    public class DeleteQuestionsMenu : Menu
+    {
+        public DeleteQuestionsMenu()
+        {
+            // Initialize the MenuItems list with "Back"
+            MenuItems = new List<string> { "Back" };
+        }
+
+        public override string DisplayMenu()
+        {
+            // Fetch questions from DataManagement and add their titles to the MenuItems
+            MenuItems = new List<string> { "Back" };
+            var questions = DataManagement.Instance.Questions;
+            foreach (var question in questions)
+            {
+                MenuItems.Add(question.Title + " " + question.QuestionType);
+            }
+
+            Console.WriteLine("View All Questions Menu:");
+            for (int i = 0; i < MenuItems.Count; i++)
+            {
+                Console.WriteLine($"{i}. {MenuItems[i]}");
+            }
+            Console.Write("Enter (0) to get back: ");
+            string option = Console.ReadLine();
+
+            // Validate the input option
+            while (!int.TryParse(option, out int index) || index < 0 || index >= MenuItems.Count)
+            {
+                Console.Write("Invalid option. Please choose again: ");
+                option = Console.ReadLine();
+            }
+            return option;
+        }
+    }
     public class CreateQuestionMenu : Menu
     {
         public CreateQuestionMenu()
@@ -190,11 +218,6 @@ namespace Comp1551_Coursewark
         {
             this.UserName = userName;
             this.Role = role;
-        }
-        public void CreateQuestion()
-        {
-            // TO DO: implement the CreateQuestion method
-            // You can add your own implementation here
         }
     }
 
@@ -337,7 +360,7 @@ namespace Comp1551_Coursewark
                         index = correctAnswerChar - 'A'; // Convert character to index (A=0, B=1, C=2, D=3)
 
                     }
-                    while (index < 0 &&  index > 3);
+                    while (index < 0 ||  index > 3);
                     return new MultipleChoiceQuestion(title, options[index], options);
 
                 case "3":
@@ -434,15 +457,19 @@ namespace Comp1551_Coursewark
 
             Question question = QuestionFactory.CreateQuestion();
             DataManagement.Instance.Questions.Add(question);
+            DataManagement.Instance.Questions.Add(question);
             // Display the main menu
- 
+
 
             // Display the manage questions menu
+
             string option = viewquestionsMenu.DisplayMenu();
+            /*
             for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
             {
                 DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
             }
+            */
             Console.ReadLine();
         }
     }
