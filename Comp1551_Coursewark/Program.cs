@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -241,28 +242,30 @@ namespace Comp1551_Coursewark
         }
         public override string DisplayMenu()
         {
+            Player user = new Player("Player", "Player");
             Console.WriteLine("Play Quiz Menu:");
-            /*
-            Console.Write("Go Back: ");
-            string option = Console.ReadLine();
-            List<string> invalidOptions = new List<string> { "0" };
-            while (!invalidOptions.Contains(option))
-            {
-                Console.Write("Invalid option. Please choose again: ");
-                option = Console.ReadLine();
-            }
-            int optionIndex = int.Parse(option);
-            string returnMenu = MenuItems[optionIndex].Replace(" ", "");
-            return returnMenu;
-            */
             if (DataManagement.Instance.Questions.Count == 0)
-                Console.WriteLine("No questions available.");
+                Console.WriteLine("No questions available.\nPress Enter to go back");
             else
-            for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
             {
-                DataManagement.Instance.Questions[i].DisplayQuestion(i);
-
-
+                DataManagement dataManagement = DataManagement.Instance;
+                // Start the stopwatch
+                dataManagement.StartStopwatch();
+                for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
+                {
+                    Question currentQuestion = DataManagement.Instance.Questions[i];
+                    currentQuestion.DisplayQuestion(i);
+                    string answer = Console.ReadLine();
+                    user.AnswerQuestion(currentQuestion, answer);
+                    Console.WriteLine("Press Enter to continue");
+                    Console.ReadLine();
+                }
+                // Stop the stopwatch after the loop
+                dataManagement.StopStopwatch();
+                Console.WriteLine($"Your score: {user.Score}");
+                // Get and print the elapsed time
+                string elapsedTime = dataManagement.GetElapsedTime();
+                Console.WriteLine($"Total time taken: {elapsedTime}");
             }
             Console.ReadLine();
             return "Back";
@@ -302,34 +305,14 @@ namespace Comp1551_Coursewark
     {
         private string _userName;
         private string _role;
+        private int _score;
+        public abstract int Score { get; set;}
         public abstract string UserName { get; set; }
         public abstract string Role { get; set; }
         public User(string userName, string role)
         {
             UserName = userName;
             Role = role;
-        }
-    }
-    public class QuestionGiver : User
-    {
-        private string _userName;
-        private string _role;
-
-        public override string UserName
-        {
-            get { return _userName; }
-            set { _userName = value; }
-        }
-
-        public override string Role
-        {
-            get { return _role; }
-            set { _role = value; }
-        }
-        public QuestionGiver(string userName, string role) : base(userName, role)
-        {
-            this.UserName = userName;
-            this.Role = role;
         }
     }
 
@@ -344,7 +327,11 @@ namespace Comp1551_Coursewark
             get { return _userName; }
             set { _userName = value; }
         }
-
+        public override int Score 
+        { 
+            get { return _score; } 
+            set { _score = value; } 
+        }
         public override string Role
         {
             get { return _role; }
@@ -356,10 +343,17 @@ namespace Comp1551_Coursewark
             this.Role = role;
             _score = 0;
         }
-        public void AnswerQuestion()
+        public void AnswerQuestion(Question question, string answer)
         {
-            // TO DO: implement the CreateQuestion method
-            // You can add your own implementation here
+            if (question.CheckAnswer(answer))
+            {
+                _score += question.Points;
+                Console.WriteLine("Correct!");
+            }
+            else
+            {
+                Console.WriteLine("Incorrect!");
+            } 
         }
     }
 
@@ -533,7 +527,7 @@ namespace Comp1551_Coursewark
 
         public List<Question> Questions { get; private set; } = new List<Question>();
         public List<Menu> MenuHistory { get; private set; } = new List<Menu>();
-
+        private Stopwatch _stopwatch = new Stopwatch();
         private DataManagement() { }
 
         public static DataManagement Instance
@@ -567,50 +561,27 @@ namespace Comp1551_Coursewark
             Console.WriteLine($"Question at index {index} has been deleted.");
             return true; // Indicate success
         }
+        // Method to start the stopwatch
+        public void StartStopwatch()
+        {
+            _stopwatch.Start();
+        }
+        // Method to stop the stopwatch
+        public void StopStopwatch()
+        {
+            _stopwatch.Stop();
+        }
+        // Method to get formatted elapsed time
+        public string GetElapsedTime()
+        {
+            TimeSpan elapsed = _stopwatch.Elapsed;
+            return string.Format("{0:D2}:{1:D2}", (int)elapsed.TotalMinutes, elapsed.Seconds);
+        }
     }
     internal class Program
     {
         static void Main(string[] args)
         {
-            /*
-            while (true)
-            {
-                Console.WriteLine("0. Exit program");
-                Console.WriteLine("1. Create a new question");
-                Console.WriteLine("2. Play the quiz game");
-                string option = Console.ReadLine();
-
-                if (option == "1")
-                {
-                    Question question = QuestionFactory.CreateQuestion();
-                    if (question != null)
-                    {
-                        DataManagement.Instance.Questions.Add(question);
-                        Console.WriteLine("Question added successfully!");
-                    }
-                }
-            }
-            Console.WriteLine("All questions below: ");
-            for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
-            {
-                DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
-            }
-            
-            Question question = QuestionFactory.CreateQuestion();
-            DataManagement.Instance.Questions.Add(question);
-            question = QuestionFactory.CreateQuestion();
-            DataManagement.Instance.Questions.Add(question);
-            question = QuestionFactory.CreateQuestion();
-            DataManagement.Instance.Questions.Add(question);
-            string deleteOption = MenuFactory.CreateMenu("DeleteQuestionsMenu").DisplayMenu();
-            string option = MenuFactory.CreateMenu("ViewAllQuestionsMenu").DisplayMenu();
-            
-            for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
-            {
-                DataManagement.Instance.Questions[i].DisplayQuestion(i + 1);
-            }
-            */
-
             Menu menu = MenuFactory.CreateMenu("MainMenu");
             EndlessMenu(menu);
             Console.ReadLine();
