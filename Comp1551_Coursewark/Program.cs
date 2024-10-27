@@ -253,6 +253,7 @@ namespace Comp1551_Coursewark
                 stopWatch.StartStopwatch();
                 for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
                 {
+                    Console.Clear();
                     Question currentQuestion = DataManagement.Instance.Questions[i];
                     currentQuestion.DisplayQuestion(i);
                     string answer = Console.ReadLine();
@@ -395,7 +396,7 @@ namespace Comp1551_Coursewark
     {
         private List<string> answerOptions;
 
-        public MultipleChoiceQuestion(string title, string correctAnswer, List<string> options, int points = 15)
+        public MultipleChoiceQuestion(string title, string correctAnswer, List<string> options, int points = 10)
             : base(title, correctAnswer)
         {
             Points = points;
@@ -421,7 +422,7 @@ namespace Comp1551_Coursewark
     {
         public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer) 
         {
-            Points = 20;
+            Points = 10;
             QuestionType = "(Open-ended)";
         }
 
@@ -483,8 +484,13 @@ namespace Comp1551_Coursewark
                     return new MultipleChoiceQuestion(title, options[index], options);
 
                 case "3":
-                    Console.Write("Enter correct answer (True/False): ");
-                    string trueFalseAnswer = Console.ReadLine();
+                    string trueFalseAnswer;
+                    do
+                    {
+                        Console.Write("Enter correct answer (True/False): ");
+                        trueFalseAnswer = Console.ReadLine();
+                    }
+                    while (!trueFalseAnswer.Equals("True", StringComparison.OrdinalIgnoreCase) && !trueFalseAnswer.Equals("False", StringComparison.OrdinalIgnoreCase));
                     return new TrueFalseQuestion(title, trueFalseAnswer);
 
                 default:
