@@ -248,9 +248,9 @@ namespace Comp1551_Coursewark
                 Console.WriteLine("No questions available.\nPress Enter to go back");
             else
             {
-                DataManagement dataManagement = DataManagement.Instance;
+                DataManagement stopWatch = DataManagement.Instance;
                 // Start the stopwatch
-                dataManagement.StartStopwatch();
+                stopWatch.StartStopwatch();
                 for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
                 {
                     Question currentQuestion = DataManagement.Instance.Questions[i];
@@ -261,10 +261,10 @@ namespace Comp1551_Coursewark
                     Console.ReadLine();
                 }
                 // Stop the stopwatch after the loop
-                dataManagement.StopStopwatch();
+                stopWatch.StopStopwatch();
                 Console.WriteLine($"Your score: {user.Score}");
                 // Get and print the elapsed time
-                string elapsedTime = dataManagement.GetElapsedTime();
+                string elapsedTime = stopWatch.GetElapsedTime();
                 Console.WriteLine($"Total time taken: {elapsedTime}");
             }
             Console.ReadLine();
@@ -564,6 +564,7 @@ namespace Comp1551_Coursewark
         // Method to start the stopwatch
         public void StartStopwatch()
         {
+            _stopwatch.Reset();
             _stopwatch.Start();
         }
         // Method to stop the stopwatch
