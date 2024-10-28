@@ -88,6 +88,12 @@ namespace Comp1551_Coursewark
             }
 
             Console.WriteLine("View All Questions Menu:");
+            if (DataManagement.Instance.Questions.Count == 0)
+            {
+                Console.WriteLine("No questions available.\nPress Enter to go back");
+                Console.ReadLine();
+                return "ManageQuestions";
+            }
             for (int i = 0; i < MenuItems.Count; i++)
             {
                 Console.WriteLine($"{i}. {MenuItems[i]}");
@@ -102,7 +108,7 @@ namespace Comp1551_Coursewark
                 option = Console.ReadLine();
             }
             DataManagement.Instance.MenuHistory.RemoveAt(DataManagement.Instance.MenuHistory.Count - 1);
-            return "Back";
+            return "ManageQuestions";
         }
     }
 
@@ -125,6 +131,12 @@ namespace Comp1551_Coursewark
             }
 
             Console.WriteLine("Delete Questions Menu:");
+            if (DataManagement.Instance.Questions.Count == 0)
+            {
+                Console.WriteLine("No questions available.\nPress Enter to go back");
+                Console.ReadLine();
+                return "Back";
+            }
             for (int i = 0; i < MenuItems.Count; i++)
             {
                 Console.WriteLine($"{i}. {MenuItems[i]}");
@@ -135,15 +147,18 @@ namespace Comp1551_Coursewark
             // Validate the input option
             int index;
             if (option == "0")
-                return "Back";
+                return "ManageQuestions";
             while (!int.TryParse(option, out index) || index < 0 || index >= MenuItems.Count)
             {
                 Console.Write("Invalid option. Please choose again: ");
                 option = Console.ReadLine();
             }
             bool success = DataManagement.Instance.DeleteQuestion(index - 1); // Adjust for "Back" option
+            if (success)
+                Console.WriteLine("Question deleted successfully.");
+            Console.ReadLine();
             DataManagement.Instance.MenuHistory.RemoveAt(DataManagement.Instance.MenuHistory.Count - 1);
-            return "Back";
+            return "ManageQuestions";
         }
     }
     public class CreateQuestionMenu : Menu
@@ -180,7 +195,7 @@ namespace Comp1551_Coursewark
 
             if (choice_int == 0) // If the user chooses to go back
             {
-                return "Back"; // Indicate that the user wants to go back
+                return "ManageQuestions"; // Indicate that the menu user wants to go back
             }
 
             Console.Write($"({questionTypes[choice_int - 1]}) Enter question title: ");
@@ -215,14 +230,19 @@ namespace Comp1551_Coursewark
                     break;
 
                 case 3:
-                    Console.Write("Enter correct answer (True/False): ");
-                    string trueFalseAnswer = Console.ReadLine();
+                    string trueFalseAnswer;
+                    do
+                    {
+                        Console.Write("Enter correct answer (True/False): ");
+                        trueFalseAnswer = Console.ReadLine();
+                    }
+                    while(!trueFalseAnswer.Equals("True", StringComparison.OrdinalIgnoreCase) && !trueFalseAnswer.Equals("False", StringComparison.OrdinalIgnoreCase));
                     question = new TrueFalseQuestion(title, trueFalseAnswer);
                     break;
 
                 default:
                     Console.WriteLine("Invalid choice.");
-                    return "Back";
+                    return "ManageQuestions";
             }
 
             // Add the created question to the DataManagement instance
@@ -230,7 +250,7 @@ namespace Comp1551_Coursewark
             DataManagement.Instance.MenuHistory.RemoveAt(DataManagement.Instance.MenuHistory.Count - 1);
             Console.WriteLine("Question created successfully.");
             Console.ReadLine();
-            return "Back"; // After creating a question, go back to the previous menu
+            return "CreateNewQuestion"; // After creating a question, go back to the previous menu
         }
     }
 
@@ -256,8 +276,8 @@ namespace Comp1551_Coursewark
                     Console.Clear();
                     Question currentQuestion = DataManagement.Instance.Questions[i];
                     currentQuestion.DisplayQuestion(i);
-                    string answer = Console.ReadLine();
-                    user.AnswerQuestion(currentQuestion, answer);
+                    string userAnswer = Console.ReadLine();
+                    user.AnswerQuestion(currentQuestion, userAnswer);
                     Console.WriteLine("Press Enter to continue");
                     Console.ReadLine();
                 }
@@ -267,12 +287,38 @@ namespace Comp1551_Coursewark
                 // Get and print the elapsed time
                 string elapsedTime = stopWatch.GetElapsedTime();
                 Console.WriteLine($"Total time taken: {elapsedTime}");
+                Console.ReadLine();
+                Console.Clear();
+                Console.WriteLine("Would you like to view all question's answer (yes/no):");
+                string answer = Console.ReadLine();
+                if (answer.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                    return "ViewAllAnswersMenu";
             }
             Console.ReadLine();
-            return "Back";
+            //DataManagement.Instance.MenuHistory.RemoveAt(DataManagement.Instance.MenuHistory.Count - 1);
+            return "MainMenu";
         }
     }
-
+    public class ViewAllAnswersMenu : Menu
+    {
+        public ViewAllAnswersMenu()
+        {
+            MenuItems = new List<string> { "" };
+        }
+        public override string DisplayMenu()
+        {
+            for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
+            {
+                Console.Clear();
+                Question currentQuestion = DataManagement.Instance.Questions[i];
+                currentQuestion.DisplayQuestion(i + 1);
+                Console.WriteLine($"Correct answer: {currentQuestion.CorrectAnswer}");
+                Console.WriteLine("Press Enter to continue");
+                Console.ReadLine();
+            }
+            return "MainMenu";
+        }
+    }
     public class ManageUserMenu : Menu
     {
         public ManageUserMenu()
@@ -518,6 +564,8 @@ namespace Comp1551_Coursewark
                     return new PlayMenu();
                 case "CreateNewQuestion":
                     return new CreateQuestionMenu();
+                case "ViewAllAnswersMenu":
+                    return new ViewAllAnswersMenu();
                 case "Back":
                     DataManagement.Instance.MenuHistory.RemoveAt(DataManagement.Instance.MenuHistory.Count - 1);
                     return DataManagement.Instance.MenuHistory[DataManagement.Instance.MenuHistory.Count - 1];
@@ -564,7 +612,7 @@ namespace Comp1551_Coursewark
             }
             // Remove the question at the specified index
             Questions.RemoveAt(index);
-            Console.WriteLine($"Question at index {index} has been deleted.");
+            Console.WriteLine($"Question at index {index + 1} has been deleted.");
             return true; // Indicate success
         }
         // Method to start the stopwatch
