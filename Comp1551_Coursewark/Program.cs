@@ -277,7 +277,8 @@ namespace Comp1551_Coursewark
                         index = correctAnswerChar - 'A';
                     }
                     while (index < 0 || index > 3);
-                    question = new MultipleChoiceQuestion(title, options[index], options);
+                    string correctAnswerCharString = ((char)('A' + index)).ToString();
+                    question = new MultipleChoiceQuestion(title, options, correctAnswerCharString);
                     break;
 
                 case 3:
@@ -288,7 +289,8 @@ namespace Comp1551_Coursewark
                         trueFalseAnswer = Console.ReadLine();
                     }
                     while(!trueFalseAnswer.Equals("True", StringComparison.OrdinalIgnoreCase) && !trueFalseAnswer.Equals("False", StringComparison.OrdinalIgnoreCase));
-                    question = new TrueFalseQuestion(title, trueFalseAnswer);
+                    bool tfAnswer = bool.Parse(trueFalseAnswer);
+                    question = new TrueFalseQuestion(title, tfAnswer);
                     break;
 
                 default:
@@ -325,6 +327,7 @@ namespace Comp1551_Coursewark
                 for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
                 {
                     Console.Clear();
+                    Console.WriteLine("Play Quiz Menu:");
                     Question currentQuestion = DataManagement.Instance.Questions[i];
                     currentQuestion.DisplayQuestion(i);
                     string userAnswer = Console.ReadLine();
@@ -360,9 +363,10 @@ namespace Comp1551_Coursewark
             for (int i = 0; i < DataManagement.Instance.Questions.Count; i++)
             {
                 Console.Clear();
+                Console.WriteLine("View All Answers Menu:");
                 Question currentQuestion = DataManagement.Instance.Questions[i];
                 currentQuestion.DisplayQuestion(i + 1);
-                Console.WriteLine($"Correct answer: {currentQuestion.CorrectAnswer}");
+                Console.WriteLine($"Correct answer: {currentQuestion.GetCorrectAnswer()}");
                 Console.WriteLine("Press Enter to continue");
                 Console.ReadLine();
             }
@@ -457,68 +461,125 @@ namespace Comp1551_Coursewark
     // Question class
     public abstract class Question
     {
-        public string Title { get; set; }
-        public string CorrectAnswer { get; set; }
-        public string QuestionType { get; set; }
-        public int Points { get; set; }
+        private string _title;
+        private string _questionType;
+        private int _points;
 
-        public Question(string title, string correctAnswer)
+        public string Title
         {
-            Title = title;
-            CorrectAnswer = correctAnswer;
+            get { return _title; }
+            set { _title = value; }
         }
 
-        public abstract bool CheckAnswer(string answer);
+        public string QuestionType
+        {
+            get { return _questionType; }
+            protected set { _questionType = value; }
+        }
+
+        public int Points
+        {
+            get { return _points; }
+            set { _points = value > 0 ? value : 1; } // Ensure points are always positive
+        }
+
+        public Question(string title)
+        {
+            Title = title;
+            Points = 10; // Default points
+        }
+
+        public abstract bool CheckAnswer(string userAnswer);
         public abstract void DisplayQuestion(int questionNumber);
+        public abstract string GetCorrectAnswer();
     }
     public class TrueFalseQuestion : Question
     {
+        private bool _correctAnswer;
+
+        public bool CorrectAnswer
+        {
+            get { return _correctAnswer; }
+            set { _correctAnswer = value; }
+        }
+
+        public TrueFalseQuestion(string title, bool correctAnswer) : base(title)
+        {
+            CorrectAnswer = correctAnswer;
+            QuestionType = "(True/False)";
+        }
+
         public override void DisplayQuestion(int questionNumber)
         {
-            Console.WriteLine($"{questionNumber}. {Title}  {QuestionType}");
+            Console.WriteLine($"{questionNumber}. {Title} {QuestionType}");
+            //Console.WriteLine("Enter True or False:");
         }
-        public override bool CheckAnswer(string answer)
+
+        public override bool CheckAnswer(string userAnswer)
         {
-            return answer.Equals(CorrectAnswer, StringComparison.OrdinalIgnoreCase);
+            return bool.TryParse(userAnswer, out bool answer) && answer == CorrectAnswer;
         }
-        public TrueFalseQuestion(string title, string correctAnswer, int points = 10)
-        : base(title, correctAnswer)
+
+        public override string GetCorrectAnswer()
         {
-            Points = points;
-            QuestionType = "(True/False)";
+            return CorrectAnswer.ToString();
         }
     }
     public class MultipleChoiceQuestion : Question
     {
-        private List<string> answerOptions;
+        private List<string> _options;
+        private string _correctAnswerIndex;
 
-        public MultipleChoiceQuestion(string title, string correctAnswer, List<string> options, int points = 10)
-            : base(title, correctAnswer)
+        public List<string> Options
         {
-            Points = points;
-            answerOptions = options;
+            get { return _options; }
+            set { _options = value ?? new List<string>(); }
+        }
+
+        public string CorrectAnswerIndex
+        {
+            get { return _correctAnswerIndex; }
+            set { _correctAnswerIndex = value.ToString(); }
+        }
+
+        public MultipleChoiceQuestion(string title, List<string> options, string correctAnswerIndex) : base(title)
+        {
+            Options = options;
+            CorrectAnswerIndex = correctAnswerIndex;
             QuestionType = "(A,B,C,D)";
         }
 
-        public override bool CheckAnswer(string answer)
-        {
-            return answer.Equals(CorrectAnswer, StringComparison.OrdinalIgnoreCase);
-        }
         public override void DisplayQuestion(int questionNumber)
         {
             Console.WriteLine($"{questionNumber}. {Title} {QuestionType}");
-            for (int i = 0, j = 'A'; j <= 'D'; i++, j++)
+            for (int i = 0; i < Options.Count; i++)
             {
-                Console.WriteLine($"{Convert.ToChar(j)}. {answerOptions[i]}");
+                Console.WriteLine($"{(char)('A' + i)}. {Options[i]}");
             }
         }
-    }
 
+        public override bool CheckAnswer(string userAnswer)
+        {
+            return (userAnswer == _correctAnswerIndex);
+        }
+
+        public override string GetCorrectAnswer()
+        {
+            return _correctAnswerIndex;
+        }
+    }
     public class OpenEndedQuestion : Question
     {
-        public OpenEndedQuestion(string title, string correctAnswer) : base(title, correctAnswer) 
+        private string _acceptableAnswers;
+        public string AcceptableAnswers
         {
-            Points = 10;
+            get { return _acceptableAnswers; }
+            set { _acceptableAnswers = value ?? string.Empty; }
+        }
+
+        public OpenEndedQuestion(string title, string acceptableAnswers) : base(title)
+        {
+            AcceptableAnswers = acceptableAnswers;
             QuestionType = "(Open-ended)";
         }
 
@@ -526,11 +587,22 @@ namespace Comp1551_Coursewark
         {
             Console.WriteLine($"{questionNumber}. {Title} {QuestionType}");
         }
-        public override bool CheckAnswer(string answer)
+        public override bool CheckAnswer(string userAnswer)
         {
-            return CorrectAnswer.Split(',').Any(a => a.Trim().Equals(answer.Trim(), StringComparison.OrdinalIgnoreCase));
+            // Split the acceptable answers by comma and trim whitespace
+            var answers = AcceptableAnswers.Split(',')
+                                           .Select(answer => answer.Trim())
+                                           .ToArray();
+
+            // Check if the user's answer matches any of the acceptable answers
+            return answers.Any(answer => answer.Equals(userAnswer.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+        public override string GetCorrectAnswer()
+        {
+            return AcceptableAnswers; // Return the single string of acceptable answers
         }
     }
+
     public class QuestionFactory
     {
         public static Question CreateQuestion()
@@ -579,7 +651,8 @@ namespace Comp1551_Coursewark
 
                     }
                     while (index < 0 ||  index > 3);
-                    return new MultipleChoiceQuestion(title, options[index], options);
+                    string correctAnswerCharString = ((char)('A' + index)).ToString();
+                    return new MultipleChoiceQuestion(title, options, correctAnswerCharString);
 
                 case "3":
                     string trueFalseAnswer;
@@ -589,7 +662,8 @@ namespace Comp1551_Coursewark
                         trueFalseAnswer = Console.ReadLine();
                     }
                     while (!trueFalseAnswer.Equals("True", StringComparison.OrdinalIgnoreCase) && !trueFalseAnswer.Equals("False", StringComparison.OrdinalIgnoreCase));
-                    return new TrueFalseQuestion(title, trueFalseAnswer);
+                    bool tfAnswer = bool.Parse(trueFalseAnswer);
+                    return new TrueFalseQuestion(title, tfAnswer);
 
                 default:
                     Console.WriteLine("Invalid choice.");
